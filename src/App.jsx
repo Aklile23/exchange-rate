@@ -1,7 +1,8 @@
 import React from 'react';
 import Navbar from './components/Navbar';
 import Header from './components/Header';
-import BestRatesTable from './components/BestRatesTable';
+import LowestRatesTable from './components/LowestRatesTable';
+import HighestRatesTable from './components/HighestRatesTable';
 
 const App = () => {
   return (
@@ -9,7 +10,8 @@ const App = () => {
       <Navbar />
       <Header />
       <main className="flex-grow p-4">
-        <BestRatesTable />
+        <LowestRatesTable />
+        <HighestRatesTable />
       </main>
     </div>
   );
