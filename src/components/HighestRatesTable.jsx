@@ -4,7 +4,7 @@ const HighestRatesTable = () => {
   return (
     <div className="my-8">
       <h2 className="text-2xl font-bold text-center text-gray-800 dark:text-black mb-4">
-        Highest Exchange Rates
+        Banks with the Highest Exchange Rates
       </h2>
       <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
         <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
