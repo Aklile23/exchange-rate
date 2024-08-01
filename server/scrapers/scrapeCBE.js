@@ -1,5 +1,5 @@
 const puppeteer = require('puppeteer');
-const ExchangeRate = require('../models/ExchangeRate'); // Ensure this path is correct
+const ExchangeRate = require('../models/ExchangeRate');
 
 const scrapeCBE = async () => {
   try {
@@ -10,7 +10,7 @@ const scrapeCBE = async () => {
     await page.goto('https://combanketh.et/en/exchange-rate/', { waitUntil: 'networkidle2' });
 
     // Wait for the table to load
-    await page.waitForSelector('table tbody tr', { timeout: 10000 }); // Increase timeout if needed
+    await page.waitForSelector('table tbody tr', { timeout: 10000 });
 
     // Extract data
     const rates = await page.evaluate(() => {
@@ -36,7 +36,6 @@ const scrapeCBE = async () => {
               cashSelling,
               transactionalBuying,
               transactionalSelling,
-              // timestamp: new Date(), // Correctly initialize timestamp as a Date object
             });
           }
         }
@@ -49,17 +48,14 @@ const scrapeCBE = async () => {
 
     await browser.close();
 
-    // Check that each entry has a valid Date
-    rates.forEach(rate => {
-      if (!(rate.timestamp instanceof Date)) {
-        console.warn(`Invalid timestamp for currency ${rate.currency}:`, rate.timestamp);
-      }
-    });
+    // Remove existing entries and insert new data
+    await ExchangeRate.deleteMany({ bank: 'Commercial Bank of Ethiopia' });
+    console.log('Existing exchange rates deleted.');
 
-    // Insert rates into MongoDB
+    // Insert new data
     if (rates.length > 0) {
       await ExchangeRate.insertMany(rates);
-      console.log('Exchange rates from Commercial Bank of Ethiopia saved');
+      console.log('Latest exchange rates from Commercial Bank of Ethiopia saved');
     } else {
       console.log('No exchange rates found to save.');
     }
