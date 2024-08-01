@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const banks = [
   'Commercial Bank of Ethiopia',
@@ -34,15 +34,34 @@ const banks = [
 
 const BankDropdown = () => {
   const [selectedBank, setSelectedBank] = useState('Commercial Bank of Ethiopia');
+  const [exchangeRates, setExchangeRates] = useState([]);
+
+  useEffect(() => {
+    // Fetch exchange rates for the default selected bank when the component mounts
+    fetchExchangeRates(selectedBank);
+  }, []);
+
+  const fetchExchangeRates = async (bank) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/exchange-rates`);
+      const data = await response.json();
+      // Filter data for the selected bank
+      const filteredRates = data.filter(rate => rate.bank === bank);
+      setExchangeRates(filteredRates);
+    } catch (error) {
+      console.error('Error fetching exchange rates:', error);
+    }
+  };
 
   const handleBankClick = (bank) => {
     setSelectedBank(bank);
+    fetchExchangeRates(bank);
   };
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-center text-gray-800 dark:text-black mb-8">
-        Live Exchange Rates from Leading Banks
+      <h2 className="text-2xl font-bold text-center text-gray-800 dark:text-white mb-8">
+        Bank Exchange Rates Comparison
       </h2>
       <div className="flex flex-col lg:flex-row lg:space-x-4 space-y-4 lg:space-y-0">
         <div className="w-full lg:w-1/3">
@@ -56,7 +75,7 @@ const BankDropdown = () => {
         </div>
         <div className="w-full lg:w-2/3">
           {selectedBank ? (
-            <div className='mt-10'>
+            <div>
               <h3 className="text-xl font-bold mb-4">{selectedBank} Exchange Rates</h3>
               <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
                 <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -70,49 +89,15 @@ const BankDropdown = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="bg-white border-b dark:bg-gray-900 dark:border-gray-700">
-                      <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">USD</th>
-                      <td className="px-6 py-4">80.0203</td>
-                      <td className="px-6 py-4">81.6207</td>
-                      <td className="px-6 py-4">80.0203</td>
-                      <td className="px-6 py-4">81.6207</td>
-                    </tr>
-                    <tr className="bg-gray-50 border-b dark:bg-gray-800 dark:border-gray-700">
-                      <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">EUR</th>
-                      <td className="px-6 py-4">90.0203</td>
-                      <td className="px-6 py-4">91.6207</td>
-                      <td className="px-6 py-4">90.0203</td>
-                      <td className="px-6 py-4">91.6207</td>
-                    </tr>
-                    <tr className="bg-gray-50 border-b dark:bg-gray-800 dark:border-gray-700">
-                      <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">EUR</th>
-                      <td className="px-6 py-4">90.0203</td>
-                      <td className="px-6 py-4">91.6207</td>
-                      <td className="px-6 py-4">90.0203</td>
-                      <td className="px-6 py-4">91.6207</td>
-                    </tr>
-                    <tr className="bg-gray-50 border-b dark:bg-gray-800 dark:border-gray-700">
-                      <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">EUR</th>
-                      <td className="px-6 py-4">90.0203</td>
-                      <td className="px-6 py-4">91.6207</td>
-                      <td className="px-6 py-4">90.0203</td>
-                      <td className="px-6 py-4">91.6207</td>
-                    </tr>
-                    <tr className="bg-gray-50 border-b dark:bg-gray-800 dark:border-gray-700">
-                      <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">EUR</th>
-                      <td className="px-6 py-4">90.0203</td>
-                      <td className="px-6 py-4">91.6207</td>
-                      <td className="px-6 py-4">90.0203</td>
-                      <td className="px-6 py-4">91.6207</td>
-                    </tr>
-                    <tr className="bg-gray-50 border-b dark:bg-gray-800 dark:border-gray-700">
-                      <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">EUR</th>
-                      <td className="px-6 py-4">90.0203</td>
-                      <td className="px-6 py-4">91.6207</td>
-                      <td className="px-6 py-4">90.0203</td>
-                      <td className="px-6 py-4">91.6207</td>
-                    </tr>
-                    {/* Add more rows as needed */}
+                    {exchangeRates.map((rate, index) => (
+                      <tr key={index} className={index % 2 === 0 ? 'bg-white border-b dark:bg-gray-900 dark:border-gray-700' : 'bg-gray-50 border-b dark:bg-gray-800 dark:border-gray-700'}>
+                        <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">{rate.currency}</th>
+                        <td className="px-6 py-4">{rate.cashBuying}</td>
+                        <td className="px-6 py-4">{rate.cashSelling}</td>
+                        <td className="px-6 py-4">{rate.transactionalBuying}</td>
+                        <td className="px-6 py-4">{rate.transactionalSelling}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
