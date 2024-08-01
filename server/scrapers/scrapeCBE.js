@@ -44,9 +44,15 @@ const scrapeCBE = async () => {
       return result;
     });
 
-    console.log('Rates to be saved:', rates); // Debug log to inspect rates array
+    console.log('Rates fetched:', rates);
 
     await browser.close();
+
+    // Ensure rates array is not empty
+    if (!rates || rates.length === 0) {
+      console.log('No rates were fetched. Check the scraping logic.');
+      return;
+    }
 
     // Remove existing entries and insert new data
     await ExchangeRate.deleteMany({ bank: 'Commercial Bank of Ethiopia' });
