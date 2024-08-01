@@ -1,59 +1,60 @@
-const axios = require('axios');
-const cheerio = require('cheerio');
-const mongoose = require('mongoose');
+const puppeteer = require('puppeteer');
+const ExchangeRate = require('../models/ExchangeRate'); // Ensure this path is correct
 
-
-// Connect to MongoDB
-mongoose.connect('mongodb+srv://<username>:<password>@cluster0.mongodb.net/<dbname>?retryWrites=true&w=majority', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-  .then(() => {
-    console.log('Connected to MongoDB Atlas');
-  })
-  .catch(err => {
-    console.error('Error connecting to MongoDB Atlas:', err);
-  });
-
-// Scrape function for Commercial Bank of Ethiopia
 const scrapeCBE = async () => {
   try {
-    // Make a request to the CBE exchange rate page
-    const { data } = await axios.get('https://combanketh.et/en/exchange-rate/');
-    
-    // Load the HTML into Cheerio
-    const $ = cheerio.load(data);
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
 
-    // Array to hold all exchange rates
-    const rates = [];
+    // Navigate to the page
+    await page.goto('https://combanketh.et/en/exchange-rate/', { waitUntil: 'networkidle2' });
 
-    // Select each table row
-    $('table tbody tr').each((i, row) => {
-      const bank = 'Commercial Bank of Ethiopia'; // Static value for bank name
+    // Wait for the table to load
+    await page.waitForSelector('table tbody tr', { timeout: 10000 }); // Increase timeout if needed
 
-      // Extract currency code and rates
-      const currency = $(row).find('td').eq(0).find('.text-sm.font-medium.text-gray-900').text().trim();
-      const cashBuying = parseFloat($(row).find('td').eq(1).text().trim());
-      const cashSelling = parseFloat($(row).find('td').eq(2).text().trim());
-      const transactionalBuying = parseFloat($(row).find('td').eq(3).text().trim());
-      const transactionalSelling = parseFloat($(row).find('td').eq(4).text().trim());
-      const timestamp = new Date();
+    // Extract data
+    const rates = await page.evaluate(() => {
+      const rows = document.querySelectorAll('table tbody tr');
+      const result = [];
 
-      // Check if currency is present to avoid empty rows
-      if (currency) {
-        rates.push({
-          bank,
-          currency,
-          cashBuying,
-          cashSelling,
-          transactionalBuying,
-          transactionalSelling,
-          timestamp,
-        });
-      }
+      rows.forEach(row => {
+        const cols = row.querySelectorAll('td');
+        const currencyElement = cols[0].querySelector('.text-sm.font-medium.text-gray-900');
+
+        if (currencyElement) {
+          const currency = currencyElement.innerText.trim();
+          const cashBuying = parseFloat(cols[1].innerText.trim());
+          const cashSelling = parseFloat(cols[2].innerText.trim());
+          const transactionalBuying = parseFloat(cols[3].innerText.trim());
+          const transactionalSelling = parseFloat(cols[4].innerText.trim());
+
+          if (currency) {
+            result.push({
+              bank: 'Commercial Bank of Ethiopia',
+              currency,
+              cashBuying,
+              cashSelling,
+              transactionalBuying,
+              transactionalSelling,
+              // timestamp: new Date(), // Correctly initialize timestamp as a Date object
+            });
+          }
+        }
+      });
+
+      return result;
     });
 
-    console.log('Rates to be saved:', rates);
+    console.log('Rates to be saved:', rates); // Debug log to inspect rates array
+
+    await browser.close();
+
+    // Check that each entry has a valid Date
+    rates.forEach(rate => {
+      if (!(rate.timestamp instanceof Date)) {
+        console.warn(`Invalid timestamp for currency ${rate.currency}:`, rate.timestamp);
+      }
+    });
 
     // Insert rates into MongoDB
     if (rates.length > 0) {
@@ -67,12 +68,4 @@ const scrapeCBE = async () => {
   }
 };
 
-// Export the scrape function
 module.exports = scrapeCBE;
-
-// Optional: Run the scraper directly for testing purposes
-if (require.main === module) {
-  scrapeCBE().then(() => {
-    mongoose.connection.close();
-  });
-}

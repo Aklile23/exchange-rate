@@ -42,7 +42,7 @@ app.get('/api/exchange-rates', async (req, res) => {
 });
 
 // Schedule scraping every 10 minutes
-cron.schedule('*/10 * * * *', () => {
+cron.schedule('*/1 * * * *', () => {
   console.log('Running scheduled scraping task');
   scrapeCBE().then(() => {
     console.log('Scraping completed');

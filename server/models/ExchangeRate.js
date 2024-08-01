@@ -3,12 +3,11 @@ const mongoose = require('mongoose');
 const exchangeRateSchema = new mongoose.Schema({
   bank: String,
   currency: String,
-  cashBuying: String,
-  cashSelling: String,
-  transactionalBuying: String,
-  transactionalSelling: String
+  cashBuying: Number,
+  cashSelling: Number,
+  transactionalBuying: Number,
+  transactionalSelling: Number,
+  // timestamp: { type: Date, default: Date.now }, // Ensure the timestamp field is set to Date type
 });
 
-const ExchangeRate = mongoose.model('ExchangeRate', exchangeRateSchema);
-
-module.exports = ExchangeRate;
+module.exports = mongoose.model('ExchangeRate', exchangeRateSchema);
